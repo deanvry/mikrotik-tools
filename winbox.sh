@@ -1,5 +1,4 @@
-#!/bin/dash
-# A simple script to download and install winbox
+#!/bin/sh
 
 chkWine () {
 echo -n ">> Checking for wine$arch installation.. "
@@ -15,8 +14,8 @@ fi
 
 chkSrc () {
 if [ ! -f src/winbox"$arch" ]; then
-    echo -n ">> Downloading Winbox$arch.. "
-    if wget -c --progress=bar:force:noscroll https://mt.lv/winbox"$arch" -P src | tail -3; then
+    echo -n ">> Downloading winbox$arch.. "
+    if wget -cq https://mt.lv/winbox"$arch" -P src; then
         echo "done"
     else
         echo failed..
@@ -31,7 +30,7 @@ if [ -x "$winbox" ]; then
 desktop_entry () {
 sed -i "s,/home/.*/.local,/home/$USER/.local," src/winbox.desktop
 if [ ! "$arch" = 64 ]; then
-    sed 's/64-bit/32-bit/; s/wine64/wine/; s/winbox64/winbox32/' src/winbox.desktop > winbox32.desktop
+    sed 's/64-bit/32-bit/; s/wine64/wine/; s/winbox64/winbox32/' src/winbox.desktop > src/winbox32.desktop
 else
     cp src/winbox.desktop src/winbox64.desktop
 fi
@@ -63,14 +62,12 @@ if [ ! "$arch" ]; then
         arch=64
         echo x86_64
     else
-        
         arch=32
         echo x86; fi
 else
-    echo ">> Explicitly using $arch bit arch"; fi
+    echo ">> Explicitly using $arch-bit arch"; fi
 
 winbox="$HOME/.local/bin/winbox$arch"
 desktop_entry="$HOME/.local/share/applications/winbox$arch.desktop"
-#icon="$HOME/.local/share/icons/winbox.png" # unused :P
 
 chkWine && chkSrc && install

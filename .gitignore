@@ -1,2 +1,4 @@
 # ignore backup files
 backup
+src/winbox64*
+src/winbox32*
