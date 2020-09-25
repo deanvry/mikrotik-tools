@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Winbox (64-bit)
+Comment=RouterOS GUI Administration Tool
+Exec=wine64 /home/username/.local/bin/winbox64
+Terminal=false
+Categories=Utility;Network
+StartupWMClass=Winbox
