@@ -1,4 +1,4 @@
-# Mikrotik-Tools
+# Winbox get Wine
 A Winbox installer for Wine. Written in dash shell.
 
 ### Installation
@@ -24,4 +24,4 @@ Manually remove the installed files:
 
 ### Dependencies:
 - `wine`: to run winbox
-- `wget`: downloading winbox binary
+- `wget/curl`: downloading winbox binary
