@@ -1,18 +1,20 @@
 # Mikrotik-Tools
-A Winbox installer for linux. Written in dash/sh.
+A Winbox installer for Wine. Written in dash shell.
 
-### Basic Usage
+### Installation
 To install, run:
 
     ./winbox.sh
 
-You can override the arch by defining the `arch` variable, available options are 32 (x86) or 64 (x86_64):
+You can override the arch by defining the `arch` variable, available options are `32` (x86) or `64` (x86_64):
 
     arch=32 ./winbox.sh
+    
+### Usage
 
-To open winbox, you can use `rofi/dmenu` and `gtk-launch winbox[32|64]` or just manually run:
+To open winbox, you can search "Winbox" on Applications Browser, or just manually run:
 
-    wine ~/.local/bin/winbox64 # or winbox32
+    wine ~/.local/bin/winbox$arch # use your previously defined $arch
 
 ### Uninstalling
 Manually remove the installed files:
@@ -21,9 +23,5 @@ Manually remove the installed files:
     rm -f ~/.local/share/applications/winbox{32,64}.desktop
 
 ### Dependencies:
-- `wine`: running winbox
+- `wine`: to run winbox
 - `wget`: downloading winbox binary
-
-### TODO
-- NetInstall
-- The Dude
