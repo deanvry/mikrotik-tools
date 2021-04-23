@@ -1,12 +1,17 @@
-# Winbox get Wine
-A Winbox installer for Wine. Written in dash shell.
+# Winbox on Wine
+A Winbox installer that run on Wine. Written in dash shell.
 
 ### Installation
+
+Dependencies:
+- `wine`: to run winbox
+- `wget/curl`: downloading winbox binary
+
 To install, run:
 
     ./winbox.sh
 
-You can override the arch by defining the `arch` variable, available options are `32` (x86) or `64` (x86_64):
+You can override installed winbox architecture by defining `arch` variable, available options are `32` (x86) or `64` (x86_64):
 
     arch=32 ./winbox.sh
     
@@ -14,14 +19,11 @@ You can override the arch by defining the `arch` variable, available options are
 
 To open winbox, you can search "Winbox" on Applications Browser, or just manually run:
 
-    wine ~/.local/bin/winbox$arch # use your previously defined $arch
+    # use your previously defined $arch
+    wine ~/.local/bin/winbox$arch
 
 ### Uninstalling
 Manually remove the installed files:
 
     rm -f ~/.local/bin/winbox{32,64}
     rm -f ~/.local/share/applications/winbox{32,64}.desktop
-
-### Dependencies:
-- `wine`: to run winbox
-- `wget/curl`: downloading winbox binary
