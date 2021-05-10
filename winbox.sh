@@ -1,73 +1,114 @@
 #!/bin/sh
 
-chkWine () {
-echo -n ">> Checking for wine$arch installation.. "
-if wine64 --version; then
-    return 0
-elif wine32 --version; then
-    return 0
+if [ ! -n "$arch" ]; then
+    arch=$(lscpu | awk '/Architecture/ {print $2}');
+    if [ "$arch" = x86_64 ]; then
+        arch=64;
+    elif [ "$arch" = x86 ]; then
+        arch="";
+    fi
 else
-    echo "\n!! Wine is not installed, aborting.. "
-    exit 1
+    if [ "$arch" = "64" ] || [ "$arch" = "32" ]; then
+        printf ">> Explicitly using $arch-bit arch\n";
+    else
+	printf "!! Invalid arch: $arch-bit. Available options are: 32 or 64"; exit 1;
+    fi
+fi
+
+winboxBinSrc="https://mt.lv/winbox$arch";
+winboxTargetInstallDir="$HOME/.local/bin";
+winboxTargetDesktopEntryDir="$HOME/.local/share/applications";
+
+helpMe() {
+printf "Usage: winbox.sh [option]
+Options:
+  -h, --help         Show this help message.
+  -i, --install      Install winbox.
+  -k, --check        Check wine and winbox installation.
+  -n, --uninstall    Uninstall winbox.
+  -u, --upgrade      Upgrade winbox.";
+}
+
+chkWine() {
+printf ">> Checking wine installation.. ";
+if command -v wine64 > /dev/null || command -v wine32 > /dev/null; then
+    printf "found\n";
+else
+    printf "error\n!! Wine is not installed, aborting.."; exit 1;
 fi
 }
 
-chkSrc () {
-if [ ! -f src/winbox"$arch" ]; then
-    echo -n ">> Downloading winbox$arch.. "
-    if wget -cq https://mt.lv/winbox"$arch" -P src; then
-        echo "done"
+chkWinboxInstall() {
+printf ">> Checking winbox$arch installation.. ";
+if [ -f "$winboxTargetInstallDir/winbox$arch" ]; then
+    printf "winbox: found";
+    if [ -f "$winboxTargetDesktopEntryDir/winbox$arch.desktop" ]; then
+        printf ", desktop entry: found\n";
     else
-        echo failed..
-        exit 1; fi
+        printf "\n!! Desktop Entry for winbox$arch: not found"; return 2;
+    fi
 else
-    echo "   > Winbox$arch is already downloaded"; fi
-
-if [ -x "$winbox" ]; then
-    echo "   > Winbox$arch is already installed"; fi
-}
-
-desktop_entry () {
-sed -i "s,/home/.*/.local,/home/$USER/.local," src/winbox.desktop
-if [ ! "$arch" = 64 ]; then
-    sed 's/64-bit/32-bit/; s/wine64/wine/; s/winbox64/winbox32/' src/winbox.desktop > src/winbox32.desktop
-else
-    cp src/winbox.desktop src/winbox64.desktop
+    printf "error\n!! Installaton for winbox$arch: not found";
+    printf "\n!! Desktop Entry for winbox$arch: not found";
+    return 2;
 fi
 }
 
-install () {
-while true; do
-read -rp "?? Proceed to install? [y/n]: " ans
-    case $ans in
-        [Yy]*) break ;;
-        [Nn]*) echo ">> Aborting.. "; exit 0 ;;
-        *) echo ">> Please answer [y/n] only" ;; esac
-done
-
-echo -n ">> Installing Winbox$arch.. "
-if [ ! -d "$HOME"/.local/bin ]; then
-    mkdir -p "$HOME"/.local/bin; fi
-cp src/winbox"$arch" "$winbox" && chmod u+x "$winbox" && echo "done"
-
-echo -n ">> Installing desktop entry.. "
-if [ ! -d "$HOME"/.local/share/applications ]; then
-    mkdir -p "$HOME"/.local/share/applications; fi
-desktop_entry && cp src/winbox"$arch".desktop "$desktop_entry" && echo "done"
+chkSrc() {
+if [ -f winbox"$arch" ]; then
+    printf ">> Winbox$arch is already downloaded\n";
+else
+    printf ">> Downloading winbox$arch.. ";
+    if command -v wget > /dev/null; then
+	wget -cq "$winboxBinSrc" && printf "done\n";
+    elif command -v curl > /dev/null; then
+        curl -Os -C - "$winboxBinSrc" && printf "done\n";
+    else
+	printf "!! Neither wget or curl is not installed, can't download winbox"; exit 1;
+    fi
+fi
 }
 
-if [ ! "$arch" ]; then
-    echo -n ">> Checking system arch.. "
-    if [ "$(lscpu | awk '/Architecture/ {print $2}')" = x86_64 ]; then
-        arch=64
-        echo x86_64
-    else
-        arch=32
-        echo x86; fi
+installDesktopEntry() {
+entry="
+Type=Application
+Version=1.0
+Comment=RouterOS Graphical Administration Tool
+Terminal=false
+Categories=Utility;Network
+StartupWMClass=Winbox"
+if [ "$arch" = 64 ]; then
+    entry="[Desktop Entry]
+Name=Winbox (64-bit)
+Exec=wine64 $winboxTargetInstallDir/winbox64$entry";
 else
-    echo ">> Explicitly using $arch-bit arch"; fi
+    entry="[Desktop Entry]
+Name=Winbox (32-bit)
+Exec=wine32 $winboxTargetInstallDir/winbox$entry";
+fi
+printf "$entry" > "winbox$arch.desktop";
+}
 
-winbox="$HOME/.local/bin/winbox$arch"
-desktop_entry="$HOME/.local/share/applications/winbox$arch.desktop"
+installWinbox() {
+printf ">> Installing winbox$arch.. ";
+install -Dm 740 "winbox$arch" "$winboxTargetInstallDir/winbox$arch" && printf "done\n";
+printf ">> Installing desktop entry.. ";
+install -Dm 640 "winbox$arch.desktop" "$winboxTargetDesktopEntryDir/winbox$arch.desktop" && printf "done\n";
+printf ">> Installaton finished\n"
+}
 
-chkWine && chkSrc && install
+uninstallWinbox() {
+printf ">> Uninstalling winbox$arch.. ";
+rm -f "$winboxTargetInstallDir/winbox$arch";
+rm -f "$winboxTargetDesktopEntryDir/winbox$arch.desktop";
+printf "done\n";
+}
+
+case $1 in
+    -h|--help|'') helpMe;;
+    -i|--install) chkWine; chkSrc; installDesktopEntry; installWinbox;;
+    -k|--check) chkWine; chkWinboxInstall;;
+    -n|--uninstall) uninstallWinbox;;
+    -u|--upgrade) rm winbox$arch; chkSrc; installWinbox;;
+    *) printf "$0: invalid option -- '$1'\nTry '$0' --help for more information.";;
+esac;
